@@ -1,0 +1,75 @@
+FistBump SIC Assembler v1.1
+
+
+1000          TEST     START   1000           TEST PROGRAM FOR SIC SOFTWARE
+1000  141039  FIRST    STL     RETADR         SAVE RETURN ADDRESS
+1003  48203F  CLOOP    JSUB    RDREC          READ INPUT RECORD
+1006  00103C           LDA     LENGTH         TEST FOR EOF (LENGTH = 0
+1009  281033           COMP    ONE            PLUS EOL OR EOF)
+100C  301015           JEQ     ENDFIL         EXIT IF EOF FOUND
+100F  4846BC           JSUB    WRREC          WRITE OUTPUT RECORD
+1012  3C1003           J       CLOOP          LOOP
+1015  00102A  ENDFIL   LDA     =C'EOF'        INSERT END OF FILE MARKER
+1018  0C103F           STA     BUFFER         
+101B  00102D           LDA     THREE          SET LENGTH = 3
+101E  0C103C           STA     LENGTH         
+1021  4846BC           JSUB    WRREC          WRITE EOF
+1024  081039           LDL     RETADR         GET RETURN ADDRESS
+1027  4C0000           RSUB                   RETURN TO CALLER
+                       LTORG                  
+102A  454F46  *        =C'EOF'                
+102D  000003  THREE    WORD    3              
+1030  000000  ZERO     WORD    0              
+1033  000001  ONE      WORD    1              
+1036  000005  FIVE     WORD    5              
+1039          RETADR   RESW    1              
+103C          LENGTH   RESW    1              
+103F          BUFFER   RESB    4096           4096-BYTE BUFFER AREA
+.                                                                 
+.       SUBROUTINE TO READ RECORD INTO BUFFER                     
+.                                                                 
+203F  041030  RDREC    LDX     ZERO           CLEAR LOOP COUNTER
+2042  001030           LDA     ZERO           CLEAR A TO ZERO
+2045  E024BB  RLOOP    TD      =X'F3'         TEST INPUT DEVICE
+2048  302045           JEQ     RLOOP          LOOP UNTIL READY
+204B  D824BB           RD      =X'F3'         READ CHARACTER INTO REGISTER A
+204E  281036           COMP    FIVE           TEST FOR EOL OR EOF
+2051  38205D           JLT     EXIT           EXIT LOOP IF FOUND
+2054  54103F           STCH    BUFFER         STORE CHARACTER IN BUFFER
+2057  2C24BC           TIX     MAXLEN         LOOP UNLESS MAX LENGTH
+205A  382045           JLT     RLOOP          HAS BEEN REACHED
+205D  54103F  EXIT     STCH    BUFFER         STORE EOL/EOF IN BUFFER
+2060  10103C           STX     LENGTH         SAVE RECORD LENGTH
+2063  00103C           LDA     LENGTH         MODIFY RECORD LENGTH TO INCLUDE
+2066  181033           ADD     ONE            EOL OR EOF
+2069  0C103C           STA     LENGTH         
+206C  4C0000           RSUB                   RETURN TO CALLER
+206F          kooso2   resb    1100           
+                       LTORG                  
+24BB  F3      *        =X'F3'                 
+24BC  001000  LEN      WORD    4096           
+24BC          MAXLEN   EQU     LEN            
+                       org     kooso2         
+206F          m        resb    6              
+2075          n        resb    3              
+2078          o        resb    2              
+                       org     kooso2         
+.                                                                 
+.       SUBROUTINE TO WRITE RECORD FROM BUFFER                    
+.        
+35BC          kooso    resb    1100           
+                       org     kooso          
+35BC          B2       resb    6              
+35C2          Gogo     resb    3              
+35C5          bassel   resb    2              
+                       org     kooso+1100     
+46BC  041030  WRREC    LDX     ZERO           CLEAR LOOP COUNTER
+46BF  E046D4  WLOOP    TD      =X'06'         TEST OUTPUT DEVICE
+46C2  3046BF           JEQ     WLOOP          LOOP UNTIL READY
+46C5  50103F           LDCH    BUFFER         GET CHARACTER FROM BUFFER
+46C8  DC46D4           WD      =X'06'         WRITE CHARACTER
+46CB  2C103C           TIX     LENGTH         LOOP UNTIL ALL CHARACTERS
+46CE  3846BF           JLT     WLOOP          HAVE BEEN WRITTEN
+46D1  4C0000           RSUB                   RETURN TO CALLER
+46D4                   END     FIRST          
+46D4  06      *        =X'06'                 
